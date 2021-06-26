@@ -60,4 +60,24 @@ class AuthController extends Controller
         ];
     }
 
+    public function refresh(Request $request)
+    {
+        $user = auth()->user();
+
+        // Validating the refresh_token
+        if (!$request->refresh_token || $request->refresh_token !== $user->getRememberToken()) {
+            return response([
+                'message' => 'Wrong token',
+            ], 403);
+        }
+        $user->tokens()->delete();
+
+        $response = [
+            'data' => [
+                'access_token' => $user->createToken('access_token')->plainTextToken,
+            ],
+            'message' => 'Refreshed!'
+        ];
+        return response($response, 201);
+    }
 }
