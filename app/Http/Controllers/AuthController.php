@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
@@ -24,4 +26,28 @@ class AuthController extends Controller
         ];
         return response($response, 201);
     }
+
+    public function login(LoginRequest $request)
+    {
+        $fields = $request->validated();
+        // Check email
+        $user = User::where('email', $fields['email'])->first();
+
+        // Check Password
+        if (!$user || !Hash::check($fields['password'], $user->password)) {
+            return response([
+                'message' => 'Bad credentials',
+            ], 401);
+        }
+        $response = [
+           'data' => [
+               'access_token' => $user->createToken('access_token')->plainTextToken,
+               'refresh_token' => $user->getRememberToken()
+           ],
+            'message' => 'Logged!'
+        ];
+        return response($response, 201);
+    }
+
+
 }
